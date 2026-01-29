@@ -34,6 +34,10 @@ Here is a detailed explanation of the tools included in the container, along wit
     *   **URL**: [https://github.com/sharkdp/bat](https://github.com/sharkdp/bat)
 *   **glow**: A terminal-based Markdown reader that makes reading documentation and other Markdown files a pleasant experience.
     *   **URL**: [https://github.com/charmbracelet/glow](https://github.com/charmbracelet/glow)
+*   **treemd**: A markdown navigator with tree-based structural navigation. Provides both TUI and CLI modes for exploring markdown documents using an expandable/collapsible heading tree with synchronized content view.
+    *   **URL**: [https://github.com/Epistates/treemd](https://github.com/Epistates/treemd)
+*   **mcat**: A terminal image, video, and Markdown viewer that can parse, convert, and preview multiple file formats directly in the terminal. Supports converting between formats (PDF/DOCX to Markdown, HTML to images) and displaying media files inline.
+    *   **URL**: [https://github.com/Skardyy/mcat](https://github.com/Skardyy/mcat)
 *   **duf**: A disk usage/free space utility that provides a user-friendly, colorized output, making it a great alternative to `df`.
     *   **URL**: [https://github.com/muesli/duf](https://github.com/muesli/duf)
 *   **dust**: A more intuitive version of the `du` command, written in Rust. It gives you an instant overview of which directories are using the most disk space.
@@ -70,10 +74,6 @@ Here is a detailed explanation of the tools included in the container, along wit
 
 ### 🤖 AI Tools
 
-*   **gemini-cli**: A command-line interface for Google's Gemini AI models, allowing you to interact with the AI for coding, debugging, and other tasks.
-    *   **URL**: [https://github.com/google/gemini-cli](https://github.com/google/gemini-cli)
-*   **claude-code**: An AI coding assistant from Anthropic that runs in your terminal, helping you with a variety of development tasks.
-    *   **URL**: [https://www.anthropic.com/claude-in-the-terminal](https://www.anthropic.com/claude-in-the-terminal)
 *   **copilot-api**: A tool that exposes GitHub Copilot as an API, allowing it to be used with a wider range of applications.
     *   **URL**: [https://github.com/copilot-cli/copilot-api](https://github.com/copilot-cli/copilot-api)
 *   **goose**: A local, extensible, open-source AI agent that can automate engineering tasks.

@@ -17,12 +17,12 @@
 - **lsd**: Modern, colorful, and user-friendly replacement for the ls command.
 - **bat**: Cat clone with syntax highlighting and Git integration for viewing files.
 - **glow**: Stylish markdown reader for the terminal with GitHub integration.
+- **treemd**: Markdown navigator with tree-based structural navigation and TUI/CLI modes.
+- **mcat**: Terminal image, video, and Markdown viewer with format conversion support.
 - **gh**: Interact with GitHub from your terminal.
 - **delta**: Syntax-highlighting pager for git, diff, and code review output.
 - **git-lfs**: Git extension for versioning large files efficiently.
 - **lazygit**: Simple, fast, terminal UI for Git commands and workflows.
-- **gemini**: Command-line interface for Google Gemini AI.
-- **claude**: Claude AI coding assistant in your terminal.
 - **copilot-api**: Enables Copilot models in Claude Code & Copilot Sonnet models in Aider.
 - **goose**: a local, extensible, open source AI agent that automates engineering tasks.
 - **hyperfine**: Command-line benchmarking tool for measuring execution time.

@@ -18,7 +18,7 @@ ARG TARGETARCH
 # path prefix for micromamba to install pkgs into
 #
 ARG prefix=/opt/conda
-ARG Micromamba_ver=2.1.0
+ARG Micromamba_ver=2.4.0
 ARG Mamba_exefile=bin/micromamba
 ENV MAMBA_EXE=/$Mamba_exefile MAMBA_ROOT_PREFIX=$prefix CONDA_PREFIX=$prefix
 ENV TEALDEER_CACHE_DIR=$prefix/.cache/tealdeer
@@ -26,7 +26,7 @@ ENV TEALDEER_CACHE_DIR=$prefix/.cache/tealdeer
 ENV PATH=${prefix}/bin:${PATH}
 
 # Updates all installed packages on the system
-RUN dnf update -y
+# RUN dnf update -y
 
 # Install micromamba
 #
@@ -75,33 +75,35 @@ RUN micromamba install -y fd-find broot yazi lsd-rust \
 RUN micromamba install -y gh git-delta git-lfs lazygit \
     && micromamba clean -y -a -f 
 
-#- Gemini CLI, Claude Code CLI, Grok cli
-#- npm install -g @vibe-kit/grok-cli
-# Gemini CLI, Claude Code CLI
-RUN cd /tmp && BASE_URL="https://nodejs.org/dist/latest/" \
-    && filename=$(wget -q -O - "$BASE_URL" | grep -oP 'node-v\d+\.\d+\.\d+-linux-x64\.tar\.xz' | head -n 1) \
-    && wget ${BASE_URL}${filename} \
-    && gtar -xf ${filename} --exclude='*.md' --exclude=LICENSE --strip-components=1 -C $prefix \
-    && rm -f ${filename} \
-    && npm install -g @google/gemini-cli \
-    && npm install -g @anthropic-ai/claude-code \
-    && npm cache clean --force
+# other tools:
+#  hyperfine, direnv, zellij
+RUN micromamba install -y hyperfine direnv zellij \
+    && micromamba clean -y -a -f 
 
-# Copilot-API
-COPY copilot-api $prefix/lib/node_modules/copilot-api
-RUN cd $prefix/bin && ln -s ../lib/node_modules/copilot-api/node_modules/copilot-api/dist/main.js copilot-api
+# tools through cargp: mcat treemd
+# the compiler gcc is required to install cargo packages
+RUN micromamba install -y -c conda-forge gcc \
+    && cargo install mcat treemd --root $prefix \
+    && micromamba uninstall -y gcc \
+    && rm -rf $HOME/.cargo \
+    && micromamba clean -y -a -f
+
+# Add this line to invalidate the cache from this point
+# For example: docker build --build-arg CACHE_BUSTER=$(date +%s)
+ARG CACHE_BUSTER=some-random-string
+RUN echo "The following commands will be re-run"
+
+# copilot-api
+RUN micromamba install -y -c conda-forge nodejs \
+    && micromamba clean -y -a -f \
+    && npm install -g copilot-api \
+    && npm cache clean --force
 
 # Goose
 RUN micromamba install -y libxcb && micromamba clean -y -a -f \
     && curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh \
     | GOOSE_BIN_DIR=$prefix/bin CONFIGURE=false bash \
     && rm -rf /tmp/*
-
-# other tools:
-#  hyperfine, direnv, zellij
-RUN micromamba install -y hyperfine direnv zellij \
-    && micromamba clean -y -a -f 
-
 
 # copy libssl.so.10 to make jupter-labhub from centos7-based host work
 # COPY --from=centos7  /lib64/libfreebl3.so /lib64/libcrypt.so.1 /lib64/libcrypto.so.10 \
