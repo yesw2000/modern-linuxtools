@@ -93,11 +93,14 @@ RUN micromamba install -y -c conda-forge gcc \
 ARG CACHE_BUSTER=some-random-string
 RUN echo "The following commands will be re-run"
 
-# copilot-api
+# Build copilot-api with support of the "/responses" API
 RUN micromamba install -y -c conda-forge nodejs \
-    && micromamba clean -y -a -f \
-    && npm install -g copilot-api \
-    && npm cache clean --force
+    && micromamba clean -y -a -f
+COPY build-copilot_api-responses_api.sh /tmp
+RUN cd /tmp && build_copilot_api="build-copilot_api-responses_api.sh" \
+    && chmod +x ${build_copilot_api} \
+    && . ./${build_copilot_api} \
+    && rm -f ${build_copilot_api}
 
 # Goose
 RUN micromamba install -y libxcb && micromamba clean -y -a -f \

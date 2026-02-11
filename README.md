@@ -16,9 +16,8 @@ The `setupMe.sh` script can also be used to serve Singularity Sandbox deployment
   - `alma9-linuxtools.Dockerfile` - Primary AlmaLinux 9 based container
   - `centos7-linuxtools.Dockerfile` - CentOS 7 based container
 - **⚙️  Setup Scripts**: Environment initialization and tool management
-  - `setupMe.sh` - Main setup script for initializing the micromamba environment and tools
+  - `setupMe.sh` - Main setup script for initializing the tools via PATH-based environment activation
   - `entrypoint.sh` - Docker container entrypoint that sources setup scripts
-  - `_activate_current_env.sh` - Micromamba environment activation helper
 - **📚 Tool Documentation**: 
   - `list-of-tools.md` - Comprehensive list of all included modern tools
   
@@ -34,11 +33,11 @@ The project uses **micromamba** as the primary package manager instead of tradit
 
 Tools are organized into functional categories:
 - **🔍 Search/Explorer**: ripgrep (rg), ugrep, fzf, skim, fd-find, broot
-- **📁 File Management**: yazi, lsd-rust, bat, glow-md, duf, dust, rip2
+- **📁 File Management**: yazi, lsd-rust, bat, glow-md, duf, dust, rip2, mcat, treemd
 - **💻 Process/System**: procs, btop, mcfly
 - **🐙 Git Tools**: gh, git-delta, git-lfs, lazygit
 - **🧑‍💻 Development**: rust, cargo, uv (Python), tealdeer (tldr)
-- **🤖 AI Tools**: gemini-cli, claude-code, copilot-api, goose
+- **🤖 AI Tools**: copilot-api (now supports /responses API), goose
 - **🐳 Container Tools**: crane, dive
 - **🔧 Utilities**: hyperfine, direnv, zellij
 
@@ -78,9 +77,6 @@ source /cvmfs/unpacked.cern.ch/registry.hub.docker.com/yesw2000/modern-linuxtool
 # List all available tools with descriptions
 list_tools
 
-# Create new micromamba environment
-mamba_new myenv
-
 # Use git diff with delta highlighting
 git_delta [git-diff-args]
 ```
@@ -118,14 +114,14 @@ When using the on-host virtual environment by sourcing `setupMe.sh`, you will se
 
 - Run `list_tools` to view the complete list of new tools.
 - For command usage, run `<command> --help` (e.g., `rg --help`).
-- For quick examples (except for gemini, copilot-api, and goose),
+- For quick examples (except for copilot-api and goose),
   use `tldr <command>` (e.g., `tldr rg`).
 A wrapper function `git_delta` is defined. Run `git_delta -h` for help
 ```
 
 ## 📝 Development Notes
 
-- The setup script (`setupMe.sh`) handles architecture detection and micromamba initialization
+- The setup script (`setupMe.sh`) now uses a simplified PATH-based environment activation (no micromamba virtual env)
 - The script can be used both in Docker containers and as a virtual environment activator for Singularity/CVMFS deployments on host systems
 - Tools are installed via micromamba to ensure consistent versions across environments
 - The `git_delta` function wraps `git diff` with delta for enhanced output
@@ -136,6 +132,6 @@ A wrapper function `git_delta` is defined. Run `git_delta -h` for help
 
 When modifying setup scripts, ensure:
 - Architecture compatibility checks remain in place
-- Micromamba environment activation works correctly
+- PATH-based environment activation works correctly
 - Tool aliases and functions are preserved
 - Cache directory configurations are maintained

@@ -43,7 +43,7 @@ Here is a detailed explanation of the tools included in the container, along wit
 *   **dust**: A more intuitive version of the `du` command, written in Rust. It gives you an instant overview of which directories are using the most disk space.
     *   **URL**: [https://github.com/bootandy/dust](https://github.com/bootandy/dust)
 *   **rip2**: A safe and ergonomic alternative to the `rm` command. Instead of permanently deleting files, it moves them to a "graveyard" directory for easy recovery.
-    *   **URL**: [https://github.com/nivekuil/rip2](https://github.com/nivekuil/rip2)
+    *   **URL**: [https://github.com/MilesCranmer/rip2](https://github.com/MilesCranmer/rip2)
 
 ### 💻 Process & System
 
@@ -75,7 +75,7 @@ Here is a detailed explanation of the tools included in the container, along wit
 ### 🤖 AI Tools
 
 *   **copilot-api**: A tool that exposes GitHub Copilot as an API, allowing it to be used with a wider range of applications.
-    *   **URL**: [https://github.com/copilot-cli/copilot-api](https://github.com/copilot-cli/copilot-api)
+    *   **URL**: [https://github.com/caozhiyuan/copilot-api](https://github.com/caozhiyuan/copilot-api)
 *   **goose**: A local, extensible, open-source AI agent that can automate engineering tasks.
     *   **URL**: [https://github.com/block/goose](https://github.com/block/goose)
 
