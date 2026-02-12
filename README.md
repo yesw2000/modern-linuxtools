@@ -6,7 +6,7 @@ This project packages a suite of cutting-edge command-line tools into portable D
 
 This is a Modern Linux Tools containerization project that packages cutting-edge command-line tools into Docker containers for AlmaLinux 9 and CentOS 7. The project creates portable environments with modern alternatives to traditional Unix tools like `ripgrep` (rg), `bat`, `fd`, `fzf`, and many others.
 
-The `setupMe.sh` script can also be used to serve Singularity Sandbox deployments (if deployed on CVMFS) as a virtual environment on host machines, making the tools accessible directly on the host system without containerization.
+The `setupMe.sh` script can also be used to serve Singularity Sandbox deployments (if deployed on CVMFS) as a tool environment on host machines, making the tools accessible directly on the host system without containerization.
 
 ## 🏗️  Architecture
 
@@ -105,9 +105,9 @@ btop
 tldr <command>
 ```
 
-### 🖥️  On-host Virtual Environment
+### 🖥️  On-host Tool Environment
 
-When using the on-host virtual environment by sourcing `setupMe.sh`, you will see the following message:
+When using the on-host tool environment by sourcing `setupMe.sh`, you will see the following message:
 
 ```bash
 🚀 Modern Linux tools (micromamba, tldr, rg, and more) are now available!
@@ -122,7 +122,7 @@ A wrapper function `git_delta` is defined. Run `git_delta -h` for help
 ## 📝 Development Notes
 
 - The setup script (`setupMe.sh`) now uses a simplified PATH-based environment activation (no micromamba virtual env)
-- The script can be used both in Docker containers and as a virtual environment activator for Singularity/CVMFS deployments on host systems
+- The script can be used both in Docker containers and as an environment activator for Singularity/CVMFS deployments on host systems
 - Tools are installed via micromamba to ensure consistent versions across environments
 - The `git_delta` function wraps `git diff` with delta for enhanced output
 - Cache directories are configured for optimal performance (tealdeer cache in CONDA_PREFIX)
