@@ -13,9 +13,14 @@ _myDir_q=$(printf %q "$_myDir")   # shell-quoted version for safe eval
 
 # --- Define functions with the resolved directory baked in ---
 
-setupMe() {
+setup_linuxtools() {
   local myDir=$_myDir_q
   [[ "$_myDir_q" == "/" ]] && myDir=""
+
+  if [[ ! -d "$myDir/opt/conda/bin" ]]; then
+    echo "Error: Directory $myDir/opt/conda/bin does not exist"
+    return 1
+  fi
 
   # Architecture validation check
   local arch_ld=$(ls $myDir/lib*/ld-linux-*.so* 2>/dev/null | head -n1 | sed -E 's|.*/ld-linux-([^.]+)\.so.*|\1|; s/-/_/g')
@@ -27,7 +32,7 @@ setupMe() {
   fi
 
   # PATH and cache setup (only PATH and TEALDEER_CACHE_DIR are visible)
-  [[ ":${PATH}:" != *":$myDir/opt/conda/bin:"* ]] && export PATH="${PATH}:$myDir/opt/conda/bin"
+  [[ ":${PATH}:" != *":$myDir/opt/conda/bin:"* ]] && export PATH="$myDir/opt/conda/bin:${PATH}"
   export TEALDEER_CACHE_DIR="$myDir/opt/conda/.cache/tealdeer"
 
   local red
@@ -42,13 +47,14 @@ setupMe() {
 - For quick examples (except for goose and copilot-api),
       use '${red}tldr <command>${reset}' (e.g., '${red}tldr rg${reset}')."
   command -v git_delta &> /dev/null && echo -e "A wrapper function ${red}git_delta${reset} is defined. Run 'git_delta -h' for help"
+  echo -e "Run '${red}remove_linuxtools${reset}' to remove the tools from PATH."
 
   # echo -e \"🚀 Modern Linux tools are now available!\"
   # echo -e \"\tRun \${red}list_tools\${reset} to view the complete list of new tools\"
 }
 
 # Run setup immediately when the script is sourced
-setupMe
+setup_linuxtools
 command -v tput &> /dev/null && alias glow='glow -w $(tput cols)'
 
 
@@ -56,7 +62,19 @@ eval "list_tools() {
   local myDir=$_myDir_q
 
   if command -v glow &> /dev/null && [ -f \"\$myDir/list-of-tools.md\" ]; then
-     glow \$myDir/list-of-tools.md
+     \$myDir/opt/conda/bin/mcat \$myDir/list-of-tools.md
+  fi
+}"
+
+eval "remove_linuxtools() {
+  local myDir=$_myDir_q
+  [[ \"$_myDir_q\" == \"/\" ]] && myDir=\"\"
+  local bin_dir=\"\$myDir/opt/conda/bin\"
+  if [[ \":\${PATH}:\" == *\":\$bin_dir:\"* ]]; then
+    export PATH=\"\$(echo \"\$PATH\" | sed -e \"s|:\${bin_dir}||g\" -e \"s|^\${bin_dir}:||\" -e \"s|:\${bin_dir}\$||\" -e \"s|^\${bin_dir}\$||\")\"
+    echo \"Removed \$bin_dir from PATH\"
+  else
+    echo \"\$bin_dir is not in PATH\"
   fi
 }"
 

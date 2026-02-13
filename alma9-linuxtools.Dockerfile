@@ -75,9 +75,11 @@ RUN micromamba install -y fd-find broot yazi lsd-rust \
 RUN micromamba install -y gh git-delta git-lfs lazygit \
     && micromamba clean -y -a -f 
 
-# other tools:
+# Other tools:
 #  hyperfine, direnv, zellij
+# Remove the tool "tput" which may conflict with the system ncurses
 RUN micromamba install -y hyperfine direnv zellij \
+    && rm -f $prefix/bin/tput \
     && micromamba clean -y -a -f 
 
 # tools through cargp: mcat treemd

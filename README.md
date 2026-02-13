@@ -117,6 +117,7 @@ When using the on-host tool environment by sourcing `setupMe.sh`, you will see t
 - For quick examples (except for copilot-api and goose),
   use `tldr <command>` (e.g., `tldr rg`).
 A wrapper function `git_delta` is defined. Run `git_delta -h` for help
+Run `remove_linuxtools` to remove the tools from PATH.
 ```
 
 ## 📝 Development Notes
