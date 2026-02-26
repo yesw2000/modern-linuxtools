@@ -1,0 +1,166 @@
+#!/bin/sh
+# Author: Shuwei Ye (yesw@bnl.gov)
+# Date: 2026-Feb
+# Version: 20260226-r1
+#
+# Script to copy files between the local machine and lxplus (or a specified
+# CERN host) using pass-otp and Kerberos.
+# The OTP code is automatically extracted from 'pass' and injected into the scp prompt.
+#
+# Required Packages:
+#   - pass (Standard Unix Password Manager)
+#   - pass-otp (OTP extension for pass)
+#   - expect (Programmed dialogue tool)
+#   - krb5-workstation (for kinit/klist)
+#
+# the next line restarts using expect \
+exec /usr/bin/expect -f "$0" -- "$@"
+
+log_user 1
+set user yesw
+set domain CERN.CH
+set user_domain "${user}@${domain}"
+
+proc usage {} {
+    puts {Usage: scp-lxplus [-h|--help] [--version] [--test-otp] [-r] source... destination}
+    puts "Copy files between the local machine and CERN lxplus using pass-otp and Kerberos."
+    puts {  source...     One or more source files/directories}
+    puts {  destination   Target location (local path or host:path)}
+    puts {  -r            Recursive copy for directories}
+    puts {  --version     Print the script version and exit}
+    puts {  --test-otp    Display the OTP code only without making the scp connection}
+    puts ""
+    puts "Examples:"
+    puts {  scp-lxplus *.sh lxplus959.cern.ch:/tmp/yesw/}
+    puts {  scp-lxplus lxplus908:/tmp/yesw/dummy.txt .}
+}
+
+# --- Argument Parsing ---
+set test_otp 0
+set scp_opts {}
+set scp_args {}
+
+set i 0
+while {$i < $argc} {
+    set arg [lindex $argv $i]
+    if {$arg eq "-h" || $arg eq "--help"} {
+        usage
+        exit 0
+    } elseif {$arg eq "--version"} {
+        set version [exec grep "^# Version:" [info script] | sed {s/^# Version: //}]
+        puts "scp-lxplus version $version"
+        exit 0
+    } elseif {$arg eq "--test-otp"} {
+        set test_otp 1
+    } elseif {$arg eq "-r"} {
+        lappend scp_opts "-r"
+    } else {
+        set scp_args [lrange $argv $i end]
+        break
+    }
+    incr i
+}
+
+if {!$test_otp && [llength $scp_args] < 2} {
+    puts stderr "Error: at least source and destination are required."
+    usage
+    exit 1
+}
+
+# --- Validate and fix remote host in scp_args ---
+set fixed_args {}
+set found_remote 0
+foreach arg $scp_args {
+    if {[string match "*:*" $arg]} {
+        set colon_idx [string first ":" $arg]
+        set host_part [string range $arg 0 [expr {$colon_idx - 1}]]
+        set path_part [string range $arg [expr {$colon_idx + 1}] end]
+        if {![string match "lxplus*" $host_part] && ![string match "*.cern.ch" $host_part]} {
+            puts stderr "Error: invalid host '$host_part'. Must match 'lxplus*' or '*.cern.ch'."
+            usage
+            exit 1
+        }
+        # Add domain name "cern.ch" if the host does not contain a domain
+        if {![string match "*.cern.ch" $host_part]} {
+            set host_part "${host_part}.cern.ch"
+        }
+        lappend fixed_args "${host_part}:${path_part}"
+        set found_remote 1
+    } else {
+        lappend fixed_args $arg
+    }
+}
+
+if {!$test_otp && !$found_remote} {
+    puts stderr "Error: no remote host found. Use host:path syntax (e.g. lxplus908:/tmp/)."
+    usage
+    exit 1
+}
+
+# --- Check pass-otp ---
+if {[catch {exec pass otp --version} pass_otp_err]} {
+    puts stderr "Error: 'pass otp' is not available. Please install 'pass-otp'."
+    exit 1
+}
+
+# --- Kerberos handling ---
+set need_knit 0
+if {[catch {exec klist} klist_out]} {
+    set need_knit 1
+} else {
+    set principal_re [format {[Pp]rincipal:\s+%s} [string map {. \\.} $user_domain]]
+    if {![regexp $principal_re $klist_out]} {
+        set need_knit 1
+    } else {
+        catch {exec kinit -R}
+    }
+}
+
+if {$need_knit} {
+    set kinit_success 0
+    for {set retry 0} {$retry <= 2} {incr retry} {
+        spawn kinit $user_domain
+        interact
+        if {[lindex [wait] 3] == 0} {
+            set kinit_success 1
+            break
+        }
+        if {$retry < 2} {
+            puts stderr "kinit failed, retrying ([expr {$retry + 1}]/2)..."
+        }
+    }
+    if {!$kinit_success} {
+        puts stderr "Warning: failed to initialize Kerberos token for $user_domain."
+    }
+}
+
+# --- OTP ---
+set otp [string trim [exec pass otp CERN_2FA]]
+
+if {$test_otp} {
+    puts "OTP code: $otp"
+    exit 0
+}
+
+# --- Run scp ---
+set scp_cmd [concat scp $scp_opts $fixed_args]
+spawn {*}$scp_cmd
+expect {
+    "Password:" {
+        stty -echo
+        expect_user -re "(.*)\n"
+        stty echo
+        set password $expect_out(1,string)
+        send "$password\r"
+        expect "Your 2nd factor*"
+        send "$otp\r"
+        expect eof
+    }
+    "Your 2nd factor*" {
+        send "$otp\r"
+        expect eof
+    }
+    eof
+}
+set result [wait]
+exit [lindex $result 3]

@@ -1,0 +1,137 @@
+#!/bin/sh
+# Author: Shuwei Ye (yesw@bnl.gov)
+# Date: 2026-Feb
+# Version: 20260226-r1
+#
+# Script to connect to lxplus (or a specified CERN host) using pass-otp and Kerberos.
+# The OTP code is automatically extracted from 'pass' and injected into the SSH prompt.
+#
+# Required Packages:
+#   - pass (Standard Unix Password Manager)
+#   - pass-otp (OTP extension for pass)
+#   - expect (Programmed dialogue tool)
+#   - krb5-workstation (for kinit/klist)
+#
+# the next line restarts using expect \
+exec /usr/bin/expect -f "$0" -- "$@"
+
+set user yesw
+set domain CERN.CH
+set user_domain "${user}@${domain}"
+
+proc usage {} {
+    puts {Usage: ssh-lxplus [-h|--help] [--version] [--test-otp] [host]}
+    puts "Connect to lxplus (or a specified CERN host) using pass-otp and Kerberos."
+    puts {  host        Remote machine matching 'lxplus*' or '*.cern.ch' (default: lxplus.cern.ch)}
+    puts {  --version   Print the script version and exit}
+    puts {  --test-otp  Display the OTP code only without making the ssh connection}
+    puts ""
+    puts "Examples:"
+    puts {  ssh-lxplus}
+    puts {  ssh-lxplus lxplus908.cern.ch}
+    puts {  ssh-lxplus lxplus959}
+}
+
+set remote_host lxplus.cern.ch
+set test_otp 0
+
+if {$argc >= 1} {
+    set arg [lindex $argv 0]
+    if {$arg eq "-h" || $arg eq "--help"} {
+        usage
+        exit 0
+    } elseif {$arg eq "--version"} {
+        set version [exec grep "^# Version:" [info script] | sed {s/^# Version: //}]
+        puts "ssh-lxplus version $version"
+        exit 0
+    } elseif {$arg eq "--test-otp"} {
+        set test_otp 1
+        if {$argc == 2} {
+            set arg [lindex $argv 1]
+            if {[string match "lxplus*" $arg] || [string match "*.cern.ch" $arg]} {
+                set remote_host $arg
+            } else {
+                puts stderr "Error: invalid host '$arg'. Must match 'lxplus*' or '*.cern.ch'."
+                usage
+                exit 1
+            }
+        } elseif {$argc > 2} {
+            usage
+            exit 1
+        }
+    } elseif {[string match "lxplus*" $arg] || [string match "*.cern.ch" $arg]} {
+        set remote_host $arg
+        if {$argc > 1} {
+            usage
+            exit 1
+        }
+    } else {
+        puts stderr "Error: invalid host '$arg'. Must match 'lxplus*' or '*.cern.ch'."
+        usage
+        exit 1
+    }
+}
+
+# Add domain name "cern.ch" if the host does not contain a domain
+if {![string match "*.cern.ch" $remote_host]} {
+    set remote_host "${remote_host}.cern.ch"
+}
+
+if {[catch {exec pass otp --version} pass_otp_err]} {
+    puts stderr "Error: 'pass otp' is not available. Please install 'pass-otp'."
+    exit 1
+}
+
+set need_knit 0
+if {[catch {exec klist} klist_out]} {
+    set need_knit 1
+} else {
+    set principal_re [format {[Pp]rincipal:\s+%s} [string map {. \\.} $user_domain]]
+    if {![regexp $principal_re $klist_out]} {
+        set need_knit 1
+    } else {
+        catch {exec kinit -R}
+    }
+}
+
+if {$need_knit} {
+    set kinit_success 0
+    for {set retry 0} {$retry <= 2} {incr retry} {
+        spawn kinit $user_domain
+        interact
+        if {[lindex [wait] 3] == 0} {
+            set kinit_success 1
+            break
+        }
+        if {$retry < 2} {
+            puts stderr "kinit failed, retrying ([expr {$retry + 1}]/2)..."
+        }
+    }
+    if {!$kinit_success} {
+        puts stderr "Warning: failed to initialize Kerberos token for $user_domain."
+    }
+}
+
+set otp [string trim [exec pass otp CERN_2FA]]
+
+if {$test_otp} {
+    puts "OTP code: $otp"
+    exit 0
+}
+
+spawn ssh $remote_host
+expect {
+    "Password:" {
+        stty -echo
+        expect_user -re "(.*)\n"
+        stty echo
+        set password $expect_out(1,string)
+        send "$password\r"
+        expect "Your 2nd factor*"
+        send "$otp\r"
+    }
+    "Your 2nd factor*" {
+        send "$otp\r"
+    }
+}
+interact
