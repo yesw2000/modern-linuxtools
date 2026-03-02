@@ -1,7 +1,7 @@
 #!/bin/sh
 # Author: Shuwei Ye (yesw@bnl.gov)
 # Date: 2026-Feb
-# Version: 20260226-r1
+# Version: 20260302-r1
 #
 # Script to connect to lxplus (or a specified CERN host) using pass-otp and Kerberos.
 # The OTP code is automatically extracted from 'pass' and injected into the SSH prompt.
@@ -12,10 +12,29 @@
 #   - expect (Programmed dialogue tool)
 #   - krb5-workstation (for kinit/klist)
 #
+# === BEGIN_USERNAME_CHECK ===
+if grep -q "set user YourNameAtCERN" "$0"; then
+    echo "First-time setup: Please enter your CERN username."
+    echo "(This input is required only for the first time)"
+    printf "CERN username: "
+    read -r cern_user
+    if [ -z "$cern_user" ]; then
+        echo "Error: username cannot be empty." >&2
+        exit 1
+    fi
+    _tmpfile="${0}.tmp.$$"
+    sed "s/set user YourNameAtCERN/set user $cern_user/" "$0" | \
+        sed '/^# === BEGIN_USERNAME_CHECK ===/,/^# === END_USERNAME_CHECK ===/d' > "$_tmpfile"
+    mv "$_tmpfile" "$0"
+    chmod +x "$0"
+    echo "Username '$cern_user' saved. Restarting..."
+    exec "$0" "$@"
+fi
+# === END_USERNAME_CHECK ===
 # the next line restarts using expect \
 exec /usr/bin/expect -f "$0" -- "$@"
 
-set user yesw
+set user YourNameAtCERN
 set domain CERN.CH
 set user_domain "${user}@${domain}"
 

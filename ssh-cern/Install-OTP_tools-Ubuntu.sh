@@ -15,7 +15,7 @@
 #
 # Author: Shuwei Ye (yesw@bnl.gov)
 # Date: 2026-Feb
-# Version: 20260226-r1
+# Version: 20260302-r1
 ################################################################################
 
 # --- Function: Usage ---
@@ -120,6 +120,7 @@ else
     install_tool "zbarimg" "zbar-tools"
     install_tool "expect" "expect"
     install_tool "gpg" "gnupg"
+    install_tool "kinit" "krb5-user"
 
     if ! pass otp --help >/dev/null 2>&1; then
         echo "Action: Installing pass-extension-otp..."
@@ -157,6 +158,59 @@ expect {
     eof
 }
 EOF
+fi
+
+RED=$(tput setaf 1)
+YELLOW=$(tput setaf 3)
+BOLD=$(tput bold)
+BLINK=$(tput blink)
+NC=$(tput sgr0)
+
+# --- SSH Config Check for lxplus* GSSAPI Settings ---
+ssh_config="$HOME/.ssh/config"
+if [[ -f "$ssh_config" ]]; then
+    # Extract the lxplus* Host block
+    lxplus_block=$(awk '
+        /^[Hh]ost[[:space:]]/ {
+            in_block = 0
+            if ($0 ~ /[[:space:]]lxplus/ || $0 ~ /[[:space:]]*\.cern\.ch/) in_block = 1
+        }
+        in_block { print }
+    ' "$ssh_config")
+
+    if [[ -n "$lxplus_block" ]]; then
+        gssapi_params=("GSSAPIAuthentication" "GSSAPIDelegateCredentials" "GSSAPITrustDns")
+        for param in "${gssapi_params[@]}"; do
+            value=$(echo "$lxplus_block" | awk -v p="$param" 'tolower($1) == tolower(p) {print $2; exit}')
+            if [[ -z "$value" ]]; then
+                echo "${BOLD}${YELLOW}Suggestion:${NC} Add '${RED}$param yes${NC}' to the '${RED}Host lxplus*${NC}' or '${RED}Host *.cern.ch${NC}' block in $ssh_config"
+            elif [[ "$value" != "yes" ]]; then
+                echo "${BOLD}${YELLOW}Suggestion:${NC} Change '${RED}$param${NC}' from '$value' to '${RED}yes${NC}' in the '${RED}Host lxplus*${NC}' or '${RED}Host *.cern.ch${NC}' block in $ssh_config"
+            fi
+        done
+    else
+        echo "${BOLD}${YELLOW}Suggestion:${NC} Add the following to $ssh_config for Kerberos-based SSH to CERN lxplus:"
+        echo "  ${RED}Host lxplus*${NC}"
+        echo "    ${RED}GSSAPIAuthentication yes${NC}"
+        echo "    ${RED}GSSAPIDelegateCredentials yes${NC}"
+        echo "    ${RED}GSSAPITrustDns yes${NC}"
+        echo ""
+        echo "  ${RED}Host *.cern.ch${NC}"
+        echo "    ${RED}GSSAPIAuthentication yes${NC}"
+        echo "    ${RED}GSSAPIDelegateCredentials yes${NC}"
+        echo "    ${RED}GSSAPITrustDns yes${NC}"
+    fi
+else
+    echo "${BOLD}${YELLOW}Suggestion:${NC} Create $ssh_config with the following for Kerberos-based SSH to CERN lxplus:"
+    echo "  ${RED}Host lxplus*${NC}"
+    echo "    ${RED}GSSAPIAuthentication yes${NC}"
+    echo "    ${RED}GSSAPIDelegateCredentials yes${NC}"
+    echo "    ${RED}GSSAPITrustDns yes${NC}"
+    echo ""
+    echo "  ${RED}Host *.cern.ch${NC}"
+    echo "    ${RED}GSSAPIAuthentication yes${NC}"
+    echo "    ${RED}GSSAPIDelegateCredentials yes${NC}"
+    echo "    ${RED}GSSAPITrustDns yes${NC}"
 fi
 
 # Final Verification
