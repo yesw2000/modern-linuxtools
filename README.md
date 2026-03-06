@@ -20,13 +20,6 @@ The `setupMe.sh` script can also be used to serve Singularity Sandbox deployment
   - `entrypoint.sh` - Docker container entrypoint that sources setup scripts
 - **📚 Tool Documentation**: 
   - `list-of-tools.md` - Comprehensive list of all included modern tools
-- **🔐 CERN SSH Scripts** (`ssh-cern/`): Automated SSH/SCP access to CERN lxplus with OTP and Kerberos
-  - `ssh-lxplus` - Connect to lxplus (or any `*.cern.ch` host) with automatic 2FA via `pass-otp` and Kerberos
-  - `scp-lxplus` - Copy files to/from lxplus with automatic 2FA via `pass-otp` and Kerberos
-  - `Install-OTP_tools-Alma.sh` - Install OTP prerequisites and initialize 2FA on Alma/RHEL/Fedora (`dnf`)
-  - `Install-OTP_tools-Mac.sh` - Install OTP prerequisites and initialize 2FA on macOS (`brew`)
-  - `Install-OTP_tools-Ubuntu.sh` - Install OTP prerequisites and initialize 2FA on Ubuntu/Debian (`apt`)
-  
 
 ### 📦 Package Management Strategy
 
@@ -124,56 +117,6 @@ When using the on-host tool environment by sourcing `setupMe.sh`, you will see t
   use `tldr <command>` (e.g., `tldr rg`).
 A wrapper function `git_delta` is defined. Run `git_delta -h` for help
 Run `remove_linuxtools` to remove the tools from PATH.
-```
-
-### 🔐 CERN SSH/SCP with Automatic 2FA
-
-The `ssh-cern/` directory provides scripts for passwordless-like access to CERN lxplus using `pass-otp` and Kerberos. The OTP code is automatically generated and injected into the SSH/SCP prompt.
-
-**Scripts overview:**
-- **`Install-OTP_tools-*.sh`**: Install OTP prerequisites (pass, pass-otp, zbar, Kerberos), initialize GPG, and **extract the 2FA secret from a CERN QR code image** into your local password store. It also checks GSSAPI settings in your `~/.ssh/config`.
-- **`ssh-lxplus`**: Connect to lxplus (or any `*.cern.ch` host) with automatic 2FA via `pass-otp`, and manage Kerberos credentials for CERN.CH.
-- **`scp-lxplus`**: Copy files to/from lxplus with automatic 2FA via `pass-otp`, and manage Kerberos credentials for CERN.CH.
-
-**First-time setup:**
-1.  Have your **CERN 2FA QR code image** (or a screenshot of it) ready.
-2.  Run the installer for your platform:
-```bash
-# Alma/RHEL/Fedora
-bash ssh-cern/Install-OTP_tools-Alma.sh
-
-# macOS
-bash ssh-cern/Install-OTP_tools-Mac.sh
-
-# Ubuntu/Debian
-bash ssh-cern/Install-OTP_tools-Ubuntu.sh
-```
-
-**Customization:**
-The scripts `ssh-lxplus` and `scp-lxplus` require your CERN username. On the first run, the scripts will:
-1.  Automatically detect that a username is not set.
-2.  Prompt you to enter your actual CERN username.
-3.  **Automatically update themselves** to save your username for future use.
-
-No manual file editing is required for this initial configuration.
-
-**Usage:**
-
-```bash
-# SSH to lxplus (default: lxplus.cern.ch)
-ssh-cern/ssh-lxplus
-
-# SSH to a specific host
-ssh-cern/ssh-lxplus lxplus959
-
-# SCP files to lxplus
-ssh-cern/scp-lxplus *.sh lxplus959.cern.ch:/tmp/mydir/
-
-# SCP files from lxplus
-ssh-cern/scp-lxplus lxplus908:/tmp/mydir/file.txt .
-
-# Test OTP generation without connecting
-ssh-cern/ssh-lxplus --test-otp
 ```
 
 ## 📝 Development Notes
